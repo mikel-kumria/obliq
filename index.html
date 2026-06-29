@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OBLIQ — Infrastructure for the reading of buildings</title>
+<meta name="description" content="Obliq turned the reading of materials, decay and existing conditions into an AI-assisted workflow — without ever removing the expert from the loop. A dispatch from 2030." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..560&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<style>
+/* ============================================================
+   OBLIQ — THE DISPATCH
+   Type:  Fraunces (storytelling serif) · Archivo (product grotesk)
+          · IBM Plex Mono (record / metadata)
+   ============================================================ */
+
+:root{
+  --ink:        #100F0C;   /* warm near-black ground            */
+  --ink-2:      #16140F;   /* raised field                       */
+  --ink-3:      #1D1A13;   /* panel                              */
+  --bone:       #ECE6D7;   /* primary paper text                 */
+  --bone-2:     #C3BCAB;   /* secondary                          */
+  --muted:      #8B8475;   /* captions / record                  */
+  --faint:      #5C5648;   /* deep captions                      */
+  --line:       rgba(236,230,215,0.14);
+  --line-soft:  rgba(236,230,215,0.07);
+
+  --azurite:    #7CA2C0;   /* the single system accent (pigment) */
+  --azurite-d:  #3E6480;
+  --ochre:      #C39253;   /* warmth, reserved for the discovery */
+  --sienna:     #B0613B;
+
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --serif:"Fraunces", Georgia, "Times New Roman", serif;
+  --sans: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --wrap: 1340px;
+  --gut: clamp(1.25rem, 5vw, 5.5rem);
+  --rule: 1px;
+}
+
+*{ box-sizing:border-box; }
+html{ -webkit-text-size-adjust:100%; scroll-behavior:auto; }
+body{
+  margin:0; background:var(--ink); color:var(--bone);
+  font-family:var(--sans); font-weight:400;
+  font-size:clamp(1rem,0.6vw + 0.9rem,1.075rem); line-height:1.62;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+::selection{ background:var(--azurite); color:var(--ink); }
+img,svg,canvas{ display:block; max-width:100%; }
+a{ color:inherit; text-decoration:none; }
+button{ font:inherit; color:inherit; cursor:pointer; }
+
+/* ---- film-grain unifier ---------------------------------- */
+.grain{
+  position:fixed; inset:-40%; z-index:60; pointer-events:none;
+  opacity:.05; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* ---- progress folio -------------------------------------- */
+.progress{ position:fixed; top:0; left:0; height:2px; width:0%; background:var(--azurite); z-index:70; }
+.folio{
+  position:fixed; right:clamp(1rem,3vw,2.2rem); bottom:clamp(1rem,3vw,2rem); z-index:55;
+  font-family:var(--mono); font-size:.66rem; letter-spacing:.16em; color:var(--muted);
+  text-align:right; pointer-events:none; line-height:1.5;
+}
+.folio b{ color:var(--bone-2); font-weight:500; }
+
+/* ---- masthead -------------------------------------------- */
+.mast{
+  position:fixed; top:0; left:0; right:0; z-index:50;
+  border-bottom:var(--rule) solid var(--line);
+  background:linear-gradient(180deg, rgba(16,15,12,.92), rgba(16,15,12,.62) 70%, rgba(16,15,12,0));
+  backdrop-filter:saturate(120%) blur(6px);
+  transition:background .4s ease, border-color .4s ease;
+}
+.mast__row{
+  max-width:var(--wrap); margin:0 auto; padding:.85rem var(--gut);
+  display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:1rem;
+}
+.mast__edition,.mast__filed{ font-family:var(--mono); font-size:.62rem; letter-spacing:.2em; color:var(--muted); }
+.mast__filed{ text-align:right; }
+.brand{ text-align:center; }
+.brand a{ display:inline-flex; flex-direction:column; align-items:center; gap:.12rem; }
+.brand__word{
+  font-family:var(--serif); font-weight:500; font-size:1.55rem; letter-spacing:.34em;
+  text-indent:.34em; line-height:1; font-variation-settings:"opsz" 40;
+}
+.brand__tag{ font-family:var(--mono); font-size:.56rem; letter-spacing:.26em; color:var(--muted); }
+
+.nav{ display:flex; gap:1.6rem; justify-content:flex-end; align-items:center; }
+.nav a{ font-family:var(--mono); font-size:.68rem; letter-spacing:.13em; color:var(--bone-2); position:relative; padding:.2rem 0; text-transform:uppercase; }
+.nav a::after{ content:""; position:absolute; left:0; right:100%; bottom:-1px; height:1px; background:var(--azurite); transition:right .4s cubic-bezier(.6,0,.2,1); }
+.nav a:hover::after, .nav a.is-active::after{ right:0; }
+.nav a.is-active{ color:var(--bone); }
+.mast__filed.nav-wrap{ display:flex; justify-content:flex-end; }
+
+.menu-btn{ display:none; background:none; border:var(--rule) solid var(--line); color:var(--bone); padding:.5rem .7rem; font-family:var(--mono); font-size:.62rem; letter-spacing:.18em; }
+.menu-overlay{
+  position:fixed; inset:0; z-index:80; background:var(--ink-2);
+  display:flex; flex-direction:column; justify-content:center; padding:var(--gut);
+  transform:translateY(-100%); transition:transform .6s cubic-bezier(.7,0,.2,1); border-bottom:var(--rule) solid var(--line);
+}
+.menu-overlay.open{ transform:translateY(0); }
+.menu-overlay a{ font-family:var(--serif); font-size:clamp(2rem,8vw,3.4rem); padding:.35rem 0; border-bottom:var(--rule) solid var(--line-soft); color:var(--bone); }
+.menu-overlay a span{ font-family:var(--mono); font-size:.7rem; color:var(--muted); letter-spacing:.16em; margin-right:1rem; vertical-align:middle; }
+.menu-close{ position:absolute; top:1.2rem; right:var(--gut); background:none; border:none; color:var(--bone); font-family:var(--mono); font-size:.8rem; letter-spacing:.2em; }
+
+/* ---- layout helpers -------------------------------------- */
+.wrap{ max-width:var(--wrap); margin:0 auto; padding-left:var(--gut); padding-right:var(--gut); }
+.section{ position:relative; padding-block:clamp(5.5rem,11vw,10rem); }
+.grid12{ display:grid; grid-template-columns:repeat(12,1fr); column-gap:clamp(1rem,2.4vw,2.4rem); }
+.kicker{
+  font-family:var(--mono); font-size:.7rem; letter-spacing:.26em; text-transform:uppercase; color:var(--azurite);
+  display:inline-flex; align-items:center; gap:.8rem; margin:0 0 1.6rem;
+}
+.kicker::before{ content:""; width:2.4rem; height:1px; background:var(--azurite); opacity:.6; }
+
+h1,h2,h3{ font-weight:400; margin:0; }
+.serif{ font-family:var(--serif); }
+.lede{
+  font-family:var(--serif); font-size:clamp(1.25rem,1.6vw,1.6rem); line-height:1.55; color:var(--bone);
+  font-variation-settings:"opsz" 30; font-weight:340;
+}
+.body-serif{ font-family:var(--serif); font-size:clamp(1.08rem,1.1vw,1.22rem); line-height:1.72; color:var(--bone-2); font-weight:330; }
+.body-serif p + p{ margin-top:1.2rem; }
+.dim{ color:var(--muted); }
+
+/* word-mask reveal primitives (animated only when JS+motion) */
+.msk{ display:inline-block; overflow:hidden; vertical-align:top; }
+.msk > span{ display:inline-block; will-change:transform; }
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.hero{ position:relative; min-height:100svh; display:flex; align-items:flex-end; overflow:hidden; }
+.hero__canvas{ position:absolute; inset:0; width:100%; height:100%; z-index:0; }
+.hero__veil{
+  position:absolute; inset:0; z-index:1; pointer-events:none;
+  background:
+    radial-gradient(120% 90% at 78% 18%, rgba(16,15,12,0) 0%, rgba(16,15,12,.35) 55%, rgba(16,15,12,.9) 100%),
+    linear-gradient(180deg, rgba(16,15,12,.55) 0%, rgba(16,15,12,.05) 26%, rgba(16,15,12,.2) 60%, var(--ink) 100%);
+}
+.hero__readouts{ position:absolute; inset:0; z-index:2; pointer-events:none; }
+.readout{
+  position:absolute; font-family:var(--mono); font-size:.64rem; letter-spacing:.08em; color:var(--bone-2);
+  opacity:0; padding:.28rem .5rem; border:1px solid var(--line); background:rgba(16,15,12,.45);
+  white-space:nowrap; backdrop-filter:blur(2px);
+}
+.readout i{ color:var(--azurite); font-style:normal; }
+.readout::before{ content:""; position:absolute; left:-9px; top:50%; width:7px; height:1px; background:var(--azurite); opacity:.7; }
+
+.hero__inner{ position:relative; z-index:3; width:100%; padding-bottom:clamp(3.5rem,8vh,7rem); }
+.hero__eyebrow{ font-family:var(--mono); font-size:.7rem; letter-spacing:.24em; color:var(--bone-2); margin:0 0 1.7rem; text-transform:uppercase; }
+.hero h1{
+  font-family:var(--serif); font-weight:340;
+  font-size:clamp(2.85rem,8.4vw,9rem); line-height:.96; letter-spacing:-0.018em;
+  font-variation-settings:"opsz" 144; max-width:16ch;
+}
+.hero h1 em{ font-style:italic; font-variation-settings:"opsz" 144; }
+.hero__sub{
+  margin:2.2rem 0 0; max-width:54ch; color:var(--bone-2);
+  font-size:clamp(1.02rem,1vw,1.15rem); line-height:1.65;
+}
+.hero__cue{ display:flex; align-items:center; gap:1rem; margin-top:2.6rem; font-family:var(--mono); font-size:.68rem; letter-spacing:.2em; color:var(--muted); }
+.hero__cue .bar{ position:relative; width:46px; height:1px; background:var(--line); overflow:hidden; }
+.hero__cue .bar::after{ content:""; position:absolute; inset:0; background:var(--azurite); transform:translateX(-100%); animation:cue 2.6s cubic-bezier(.7,0,.3,1) infinite; }
+@keyframes cue{ 0%{transform:translateX(-100%)} 55%{transform:translateX(0)} 100%{transform:translateX(100%)} }
+
+/* ============================================================
+   NARRATIVE (the dissolve)
+   ============================================================ */
+.narrative{ padding-block:clamp(4rem,8vw,7rem); border-bottom:var(--rule) solid var(--line); }
+.narrative__head{ font-family:var(--mono); font-size:.7rem; letter-spacing:.22em; color:var(--muted); margin-bottom:2.4rem; display:flex; justify-content:space-between; flex-wrap:wrap; gap:1rem; border-bottom:var(--rule) solid var(--line); padding-bottom:1rem; }
+.narrative__drop{ font-family:var(--serif); font-size:clamp(1.5rem,2.2vw,2.1rem); line-height:1.4; max-width:30ch; font-weight:340; margin-bottom:2.6rem; }
+.cols{ columns: 2 320px; column-gap:clamp(2rem,4vw,4rem); }
+.cols p{ margin:0 0 1.2rem; font-family:var(--serif); font-weight:330; line-height:1.74; color:var(--bone-2); font-size:1.05rem; break-inside:avoid; }
+.cols p:first-child::first-letter{
+  font-size:3.6em; line-height:.78; float:left; padding:.04em .14em 0 0; font-weight:500; color:var(--bone);
+  font-variation-settings:"opsz" 144;
+}
+
+/* ============================================================
+   SECTION 1 — THE PROBLEM
+   ============================================================ */
+.problem{ border-bottom:var(--rule) solid var(--line); }
+.problem .grid12{ row-gap:clamp(2rem,4vw,3.5rem); }
+.problem__title{ grid-column:1 / 9; }
+.problem__title h2{ font-family:var(--serif); font-size:clamp(2.1rem,5.4vw,4.9rem); line-height:1.02; font-weight:340; letter-spacing:-0.01em; font-variation-settings:"opsz" 90; }
+.problem__title h2 b{ font-weight:340; color:var(--azurite); font-style:italic; }
+.problem__aside{ grid-column:10 / 13; align-self:end; }
+.problem__aside .body-serif{ font-size:1.02rem; }
+.problem__body{ grid-column:1 / 7; }
+.pull{
+  grid-column:7 / 13; align-self:center; border-left:var(--rule) solid var(--azurite); padding-left:clamp(1.4rem,2.4vw,2.6rem);
+}
+.pull q{ font-family:var(--serif); font-style:italic; font-size:clamp(1.6rem,3.4vw,3rem); line-height:1.18; quotes:none; display:block; font-weight:340; }
+.pull cite{ display:block; margin-top:1.2rem; font-family:var(--mono); font-size:.68rem; letter-spacing:.14em; color:var(--muted); font-style:normal; }
+
+.ledger{ grid-column:1 / 13; margin-top:clamp(1.5rem,3vw,2.5rem); border-top:var(--rule) solid var(--line); }
+.ledger__cap{ font-family:var(--mono); font-size:.66rem; letter-spacing:.2em; color:var(--muted); padding:1rem 0; }
+.ledger__row{ display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(1rem,3vw,3rem); }
+.fig{ border-top:var(--rule) solid var(--line-soft); padding-top:1.4rem; }
+.fig__n{ font-family:var(--serif); font-size:clamp(2.6rem,6vw,5rem); line-height:1; font-weight:330; font-variation-settings:"opsz" 144; }
+.fig__n span{ color:var(--azurite); }
+.fig__l{ margin-top:.9rem; color:var(--muted); font-size:.95rem; max-width:26ch; }
+
+/* ============================================================
+   SECTION 2 — THE LOST DECORATIONS
+   ============================================================ */
+.discovery{ background:linear-gradient(180deg, var(--ink) 0%, #14110b 40%, #14110b 60%, var(--ink) 100%); border-bottom:var(--rule) solid var(--line); overflow:hidden; }
+.discovery .kicker{ color:var(--ochre); }
+.discovery .kicker::before{ background:var(--ochre); }
+.disc__intro{ grid-column:2 / 9; }
+.disc__intro h2{ font-family:var(--serif); font-size:clamp(2rem,4.6vw,4rem); line-height:1.06; font-weight:340; font-variation-settings:"opsz" 90; }
+.disc__date{ grid-column:11/13; align-self:start; font-family:var(--mono); font-size:.66rem; letter-spacing:.14em; color:var(--muted); text-align:right; line-height:1.7; }
+
+.disc__quote{ margin-block:clamp(3.5rem,8vw,7rem); text-align:center; }
+.disc__quote q{ font-family:var(--serif); font-style:italic; font-weight:340; quotes:none; display:block; max-width:18ch; margin:0 auto;
+  font-size:clamp(2.1rem,6vw,5.4rem); line-height:1.08; font-variation-settings:"opsz" 144; }
+.disc__quote q b{ color:var(--ochre); font-weight:340; }
+
+/* archival fresco figure */
+.plate{ grid-column:1 / 8; position:relative; }
+.plate figure{ margin:0; border:var(--rule) solid var(--line); background:var(--ink-2); padding:clamp(.8rem,1.4vw,1.3rem); }
+.plate svg{ width:100%; height:auto; display:block; }
+.plate figcaption{ font-family:var(--mono); font-size:.62rem; letter-spacing:.12em; color:var(--muted); margin-top:.9rem; display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+.plate__note{ grid-column:9 / 13; align-self:center; }
+.plate__note .body-serif{ font-size:1.06rem; }
+.disc__close{ grid-column:3 / 11; text-align:center; margin-top:clamp(3rem,7vw,6rem); }
+.disc__close p{ font-family:var(--serif); font-weight:340; font-size:clamp(1.3rem,2.4vw,2rem); line-height:1.4; }
+
+/* annotation animation hooks */
+.lead{ stroke:var(--azurite); stroke-width:1; fill:none; }
+.lead.warm{ stroke:var(--ochre); }
+.anno{ font-family:var(--mono); font-size:9px; letter-spacing:.06em; }
+.anno tspan.k{ fill:var(--azurite); }
+.anno tspan.kw{ fill:var(--ochre); }
+.dot{ fill:var(--azurite); }
+.dot.warm{ fill:var(--ochre); }
+
+/* ============================================================
+   SECTION 3 — HOW OBLIQ WORKS
+   ============================================================ */
+.system{ border-bottom:var(--rule) solid var(--line); }
+.system__head{ grid-column:1 / 8; }
+.system__head h2{ font-family:var(--serif); font-size:clamp(2rem,4.8vw,4.2rem); line-height:1.04; font-weight:340; font-variation-settings:"opsz" 90; }
+.system__head .lede{ margin-top:1.8rem; max-width:40ch; }
+.system__tag{ grid-column:9 / 13; align-self:end; }
+.system__tag .body-serif{ font-size:1rem; }
+.system__tag .stamp{ font-family:var(--mono); font-size:.66rem; letter-spacing:.16em; color:var(--azurite); border:var(--rule) solid var(--azurite-d); padding:.6rem .8rem; display:inline-block; margin-bottom:1.2rem; }
+
+.pipe{ grid-column:1 / 13; margin-top:clamp(2.5rem,5vw,4.5rem); border-top:var(--rule) solid var(--line); padding-top:clamp(2rem,4vw,3rem); }
+.pipe__band{ font-family:var(--mono); font-size:.66rem; letter-spacing:.22em; color:var(--muted); margin-bottom:2rem; }
+.steps{ display:grid; grid-template-columns:repeat(6,1fr); gap:0; }
+.step{ position:relative; padding:1.4rem clamp(.8rem,1.4vw,1.4rem) 1.6rem 0; border-top:var(--rule) solid var(--line-soft); }
+.step__no{ font-family:var(--mono); font-size:.66rem; color:var(--muted); letter-spacing:.1em; }
+.step__no b{ color:var(--azurite); font-weight:500; }
+.step h3{ font-family:var(--serif); font-size:1.3rem; font-weight:360; margin:.7rem 0 .55rem; line-height:1.12; }
+.step p{ font-size:.9rem; color:var(--muted); line-height:1.5; margin:0; }
+.step.is-human{ background:linear-gradient(180deg, rgba(124,162,192,.07), transparent); }
+.step.is-human .step__no b{ color:var(--azurite); }
+.step__sig{ position:absolute; top:1.4rem; right:.4rem; font-family:var(--mono); font-size:.58rem; color:var(--azurite); letter-spacing:.08em; }
+.pipe__line{ height:1px; background:var(--line); position:relative; margin-top:0; }
+.pipe__line i{ position:absolute; left:0; top:-1px; height:3px; background:var(--azurite); width:0; }
+.system__authorship{ grid-column:1/13; margin-top:2.6rem; }
+.system__authorship q{ font-family:var(--serif); font-style:italic; font-weight:340; quotes:none; font-size:clamp(1.3rem,2.6vw,2.2rem); line-height:1.3; display:block; max-width:30ch; }
+
+/* ============================================================
+   SECTION 4 — BEFORE / AFTER (horizontal)
+   ============================================================ */
+.ba{ background:var(--ink-2); border-bottom:var(--rule) solid var(--line); }
+.ba__intro{ padding-top:clamp(4rem,8vw,7rem); }
+.ba__intro h2{ grid-column:1/9; font-family:var(--serif); font-size:clamp(2rem,4.8vw,4.2rem); line-height:1.04; font-weight:340; font-variation-settings:"opsz" 90; }
+.ba__intro p{ grid-column:9/13; align-self:end; color:var(--muted); }
+.ba__pin{ overflow:hidden; }
+.ba__track{ display:flex; gap:clamp(1.5rem,3vw,3rem); padding:clamp(3rem,6vw,5rem) var(--gut); width:max-content; align-items:stretch; }
+.frame{ width:min(80vw,440px); flex:0 0 auto; border:var(--rule) solid var(--line); padding:clamp(1.6rem,2.4vw,2.4rem); display:flex; flex-direction:column; background:var(--ink); position:relative; }
+.frame.head{ width:min(70vw,360px); justify-content:center; border:none; background:transparent; }
+.frame.head h3{ font-family:var(--serif); font-size:clamp(2.4rem,5vw,4rem); line-height:1; font-weight:340; }
+.frame.head h3 small{ display:block; font-family:var(--mono); font-size:.7rem; letter-spacing:.2em; color:var(--muted); margin-top:1rem; }
+.frame__tag{ font-family:var(--mono); font-size:.64rem; letter-spacing:.16em; color:var(--muted); margin-bottom:auto; }
+.frame.is-after{ border-color:var(--azurite-d); background:linear-gradient(180deg, rgba(124,162,192,.06), var(--ink)); }
+.frame.is-after .frame__tag{ color:var(--azurite); }
+.frame h4{ font-family:var(--serif); font-size:clamp(1.5rem,2.4vw,2rem); font-weight:360; line-height:1.1; margin:2.4rem 0 .8rem; }
+.frame p{ font-size:.95rem; color:var(--bone-2); margin:0; line-height:1.55; }
+.frame .ix{ margin-top:1.6rem; font-family:var(--mono); font-size:.6rem; letter-spacing:.1em; color:var(--faint); }
+.frame.is-before h4{ color:var(--bone-2); }
+.frame.is-after h4{ color:var(--bone); }
+.ba__hint{ padding:0 var(--gut) clamp(3rem,6vw,4rem); font-family:var(--mono); font-size:.64rem; letter-spacing:.16em; color:var(--muted); }
+
+/* fallback vertical */
+.ba__track.stacked{ flex-direction:column; width:auto; align-items:stretch; }
+.ba__track.stacked .frame, .ba__track.stacked .frame.head{ width:auto; }
+
+/* ============================================================
+   SECTION 5 — INFRASTRUCTURE
+   ============================================================ */
+.infra{ border-bottom:var(--rule) solid var(--line); }
+.infra__head{ grid-column:1/8; }
+.infra__head h2{ font-family:var(--serif); font-size:clamp(2rem,4.6vw,4rem); line-height:1.05; font-weight:340; font-variation-settings:"opsz" 90; }
+.infra__head .body-serif{ margin-top:1.8rem; max-width:42ch; }
+.infra__note{ grid-column:9/13; align-self:end; font-family:var(--mono); font-size:.66rem; letter-spacing:.14em; color:var(--muted); line-height:1.8; }
+.register{ grid-column:1/13; margin-top:clamp(2.5rem,5vw,4rem); border-top:var(--rule) solid var(--line); }
+.reg-row{ display:grid; grid-template-columns:auto 1fr; gap:clamp(1rem,4vw,4rem); align-items:baseline; padding:1.5rem 0; border-bottom:var(--rule) solid var(--line-soft); transition:background .4s; }
+.reg-row:hover{ background:rgba(124,162,192,.04); }
+.reg-row .rn{ font-family:var(--mono); font-size:.7rem; color:var(--muted); letter-spacing:.1em; padding-top:.4rem; }
+.reg-row h3{ font-family:var(--serif); font-size:clamp(1.5rem,2.6vw,2.3rem); font-weight:350; line-height:1; }
+.reg-row p{ margin:.6rem 0 0; color:var(--muted); font-size:.98rem; max-width:60ch; }
+.reg-row .ar{ justify-self:end; align-self:center; color:var(--azurite); font-family:var(--mono); font-size:.9rem; opacity:0; transform:translateX(-8px); transition:.4s; }
+.reg-row:hover .ar{ opacity:1; transform:translateX(0); }
+.reg-grid{ display:grid; grid-template-columns:auto 1fr auto; gap:clamp(1rem,4vw,4rem); align-items:baseline; }
+
+/* ============================================================
+   SECTION 6 — VISION
+   ============================================================ */
+.vision{ text-align:center; padding-block:clamp(7rem,14vw,12rem); border-bottom:var(--rule) solid var(--line); }
+.vision .kicker{ justify-content:center; }
+.vision .kicker::before{ display:none; }
+.vision h2{ font-family:var(--serif); font-size:clamp(2.3rem,6.2vw,5.6rem); line-height:1.04; font-weight:330; letter-spacing:-0.01em; max-width:20ch; margin:0 auto; font-variation-settings:"opsz" 144; }
+.vision__body{ max-width:50ch; margin:2.8rem auto 0; }
+.vision__body p{ font-family:var(--serif); font-weight:330; color:var(--bone-2); font-size:clamp(1.1rem,1.4vw,1.35rem); line-height:1.65; }
+.vision__body p strong{ color:var(--bone); font-weight:330; font-style:italic; }
+.vision q{ display:block; font-family:var(--serif); font-style:italic; quotes:none; font-weight:340; margin-top:3rem; color:var(--azurite); font-size:clamp(1.2rem,2vw,1.7rem); }
+
+/* ============================================================
+   FINAL CTA
+   ============================================================ */
+.cta{ padding-block:clamp(6rem,12vw,11rem); }
+.cta__line{ font-family:var(--serif); font-weight:330; font-size:clamp(1.8rem,5.2vw,4.4rem); line-height:1.08; max-width:20ch; letter-spacing:-0.01em; font-variation-settings:"opsz" 144; }
+.cta__form{ margin-top:clamp(2.5rem,5vw,4rem); display:flex; align-items:flex-end; gap:1.2rem; flex-wrap:wrap; max-width:560px; }
+.field{ flex:1 1 260px; }
+.field label{ display:block; font-family:var(--mono); font-size:.64rem; letter-spacing:.16em; color:var(--muted); margin-bottom:.7rem; }
+.field input{ width:100%; background:transparent; border:none; border-bottom:var(--rule) solid var(--line); color:var(--bone); font-family:var(--serif); font-size:1.3rem; padding:.5rem 0; }
+.field input::placeholder{ color:var(--faint); }
+.field input:focus{ outline:none; border-color:var(--azurite); }
+.btn{
+  position:relative; border:var(--rule) solid var(--bone); background:transparent; color:var(--bone);
+  padding:1rem 1.8rem; font-family:var(--mono); font-size:.72rem; letter-spacing:.18em; text-transform:uppercase;
+  overflow:hidden; transition:color .4s; white-space:nowrap;
+}
+.btn span{ position:relative; z-index:1; }
+.btn::before{ content:""; position:absolute; inset:0; background:var(--bone); transform:translateY(101%); transition:transform .45s cubic-bezier(.7,0,.2,1); }
+.btn:hover{ color:var(--ink); }
+.btn:hover::before{ transform:translateY(0); }
+.btn:focus-visible{ outline:2px solid var(--azurite); outline-offset:3px; }
+.cta__msg{ margin-top:1.6rem; font-family:var(--mono); font-size:.72rem; letter-spacing:.08em; color:var(--azurite); min-height:1.2em; }
+.cta__fine{ margin-top:1.4rem; font-size:.85rem; color:var(--muted); max-width:46ch; }
+
+/* ============================================================
+   COLOPHON / FOOTER
+   ============================================================ */
+.colophon{ border-top:var(--rule) solid var(--line); padding-block:clamp(3.5rem,7vw,5.5rem); }
+.colophon .grid12{ row-gap:2.5rem; }
+.colo__brand{ grid-column:1/6; }
+.colo__brand .w{ font-family:var(--serif); font-size:2.2rem; letter-spacing:.3em; text-indent:.3em; font-weight:500; font-variation-settings:"opsz" 40; }
+.colo__brand p{ margin:1.4rem 0 0; color:var(--muted); font-family:var(--mono); font-size:.66rem; letter-spacing:.1em; line-height:1.9; }
+.colo__col{ grid-column:span 2; }
+.colo__col:nth-of-type(2){ grid-column:8/10; }
+.colo__col:nth-of-type(3){ grid-column:10/13; }
+.colo__col h4{ font-family:var(--mono); font-size:.62rem; letter-spacing:.2em; color:var(--muted); margin:0 0 1.2rem; font-weight:500; }
+.colo__col a, .colo__col span{ display:block; font-family:var(--serif); font-size:1.05rem; color:var(--bone-2); padding:.3rem 0; }
+.colo__col a{ position:relative; width:fit-content; }
+.colo__col a::after{ content:""; position:absolute; left:0; right:100%; bottom:.1rem; height:1px; background:var(--azurite); transition:right .4s; }
+.colo__col a:hover::after{ right:0; }
+.colo__col a:hover{ color:var(--bone); }
+.colo__bottom{ grid-column:1/13; display:flex; justify-content:space-between; flex-wrap:wrap; gap:1rem; border-top:var(--rule) solid var(--line); padding-top:1.8rem; margin-top:1rem; font-family:var(--mono); font-size:.62rem; letter-spacing:.14em; color:var(--faint); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px){
+  .mast__row{ grid-template-columns:auto 1fr auto; }
+  .nav, .mast__edition{ display:none; }
+  .brand{ text-align:left; }
+  .brand a{ align-items:flex-start; }
+  .menu-btn{ display:inline-block; }
+  .mast__filed.nav-wrap{ justify-content:flex-end; }
+  .problem__title,.problem__body,.pull,.problem__aside{ grid-column:1/13; }
+  .pull{ border-left:none; border-top:var(--rule) solid var(--azurite); padding-left:0; padding-top:1.4rem; }
+  .disc__intro,.disc__date,.plate,.plate__note,.disc__close{ grid-column:1/13; text-align:left; }
+  .disc__date{ text-align:left; }
+  .disc__close{ text-align:center; }
+  .system__head,.system__tag,.infra__head,.infra__note{ grid-column:1/13; }
+  .ba__intro h2,.ba__intro p{ grid-column:1/13; }
+  .steps{ grid-template-columns:repeat(2,1fr); }
+  .step{ padding-right:1rem; }
+  .colo__brand{ grid-column:1/13; }
+  .colo__col,.colo__col:nth-of-type(2),.colo__col:nth-of-type(3){ grid-column:span 6; }
+}
+@media (max-width: 600px){
+  :root{ --gut:1.25rem; }
+  .ledger__row{ grid-template-columns:1fr; gap:0; }
+  .fig{ padding-block:1.2rem; }
+  .steps{ grid-template-columns:1fr; }
+  .reg-grid{ grid-template-columns:1fr; }
+  .reg-row .ar{ display:none; }
+  .cols{ columns:1; }
+  .colo__col,.colo__col:nth-of-type(2),.colo__col:nth-of-type(3){ grid-column:1/13; }
+  .folio{ display:none; }
+  .cta__form{ flex-direction:column; align-items:stretch; }
+  .btn{ width:100%; }
+}
+
+/* reduced motion: everything visible, no drama */
+@media (prefers-reduced-motion: reduce){
+  .hero__cue .bar::after{ animation:none; }
+  *{ scroll-behavior:auto !important; }
+}
+.no-js-hidden{}
+</style>
+</head>
+
+<body>
+
+<div class="grain" aria-hidden="true"></div>
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<div class="folio" aria-hidden="true">
+  <div>THE DISPATCH</div>
+  <div>FOLIO <b id="folioNum">00</b> / 08</div>
+</div>
+
+<!-- ============================ MASTHEAD ============================ -->
+<header class="mast" id="mast">
+  <div class="mast__row">
+    <div class="mast__edition">EDITION No. 01<br/>PUBLISHED MMXXX</div>
+    <div class="brand">
+      <a href="#top" aria-label="Obliq — home">
+        <span class="brand__word">OBLIQ</span>
+        <span class="brand__tag">THE READING OF BUILDINGS</span>
+      </a>
+    </div>
+    <div class="mast__filed nav-wrap">
+      <nav class="nav" aria-label="Primary">
+        <a href="#problem">The Problem</a>
+        <a href="#discovery">The Discovery</a>
+        <a href="#system">The System</a>
+        <a href="#infra">Infrastructure</a>
+        <a href="#vision">Vision</a>
+        <a href="#access" class="is-active" style="color:var(--azurite)">Request Access</a>
+      </nav>
+      <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="menu">MENU</button>
+    </div>
+  </div>
+</header>
+
+<div class="menu-overlay" id="menu" aria-hidden="true">
+  <button class="menu-close" id="menuClose" aria-label="Close menu">CLOSE ✕</button>
+  <a href="#problem"><span>I</span>The Problem</a>
+  <a href="#discovery"><span>II</span>The Discovery</a>
+  <a href="#system"><span>III</span>The System</a>
+  <a href="#workflow"><span>IV</span>Before / After</a>
+  <a href="#infra"><span>V</span>Infrastructure</a>
+  <a href="#vision"><span>VI</span>Vision</a>
+  <a href="#access" style="color:var(--azurite)"><span>—</span>Request Access</a>
+</div>
+
+<main id="top">
+
+<!-- ============================ HERO ============================ -->
+<section class="hero" aria-label="Introduction">
+  <canvas class="hero__canvas" id="surface" aria-hidden="true"></canvas>
+  <div class="hero__veil" aria-hidden="true"></div>
+  <div class="hero__readouts" id="readouts" aria-hidden="true">
+    <span class="readout" style="left:13%; top:30%;">LIME PLASTER · <i>conf 0.91</i></span>
+    <span class="readout" style="left:68%; top:24%;">HAIRLINE CRACK · <i>2.1 mm</i></span>
+    <span class="readout" style="left:74%; top:58%;">AZURITE GHOST · <i>trace</i></span>
+    <span class="readout" style="left:20%; top:64%;">SALT EFFLORESCENCE · <i>active</i></span>
+    <span class="readout" style="left:52%; top:42%;">OVERPAINT · <i>3 layers</i></span>
+  </div>
+
+  <div class="hero__inner wrap">
+    <p class="hero__eyebrow" data-fade>A special edition · written from 2030, looking back</p>
+    <h1 data-split>The buildings already <em>know their story.</em></h1>
+    <p class="hero__sub" data-fade>
+      For centuries, understanding an existing building meant slow interpretation, fragmented tools, and
+      documentation done by hand. Obliq turned that reading into an AI-assisted workflow — without ever
+      removing the expert from the loop.
+    </p>
+    <div class="hero__cue" data-fade>
+      <span class="bar"></span> Begin reading
+    </div>
+  </div>
+</section>
+
+<!-- ===================== NARRATIVE (the dissolve) ===================== -->
+<section class="narrative wrap" aria-label="Editorial note">
+  <div class="narrative__head">
+    <span>FILED FROM THE RECORD — A RETROSPECTIVE</span>
+    <span>SET IN FRAUNCES &amp; ARCHIVO</span>
+  </div>
+  <p class="narrative__drop serif" data-reveal>
+    In the decade now closing, the work of caring for old buildings quietly changed its method.
+    Not its purpose. Its method.
+  </p>
+  <div class="cols" data-reveal>
+    <p>The people did not change. The walls did not change. The slow, careful judgement of those who read
+      plaster and stone for a living — that did not change either. What changed was the speed at which a wall
+      could be read, and therefore the number of walls that could be read at all.</p>
+    <p>Before, a single surface might wait years for an expert eye, and the eye, once it arrived, worked
+      against the clock. A scaffold has a rental. A site has a schedule. Understanding, historically, was the
+      first thing a deadline removed.</p>
+    <p>What follows is an account of how that order was reversed — how interpretation stopped being the
+      bottleneck and became the foundation. It is told here as it was lived: as a story about attention, and
+      about who, in the end, was kept in the room.</p>
+  </div>
+</section>
+
+<!-- ===================== SECTION 1 — THE PROBLEM ===================== -->
+<section class="section problem" id="problem" aria-labelledby="problem-h">
+  <div class="wrap grid12">
+    <div class="problem__title">
+      <p class="kicker">I — The Inheritance</p>
+      <h2 id="problem-h" data-split>The expertise always existed. <b>The workflow did not.</b></h2>
+    </div>
+    <aside class="problem__aside" data-reveal>
+      <p class="body-serif">Most of the buildings we will still be using in 2050 are already standing. Each
+        ages on its own schedule, in its own materials, with its own history written into the surface.</p>
+    </aside>
+
+    <div class="problem__body body-serif" data-reveal>
+      <p>For as long as there have been conservators, the knowledge to read an old building has been held in
+        human hands — in the way a thumb tests render for hollowness, in the practiced reading of a crack's
+        direction, in the memory of a thousand similar walls.</p>
+      <p>What was missing was never the knowledge. It was a way to apply it at the scale of the problem:
+        millions of surfaces, decaying continuously, surveyed one slow afternoon at a time. The backlog was
+        not a failure of expertise. It was a failure of throughput.</p>
+    </div>
+
+    <blockquote class="pull" data-reveal>
+      <q>The knowledge was never missing. The hours were.</q>
+      <cite>— On the economics of neglected heritage</cite>
+    </blockquote>
+
+    <div class="ledger" data-reveal>
+      <p class="ledger__cap">By the dispatch's accounting</p>
+      <div class="ledger__row">
+        <div class="fig">
+          <div class="fig__n" data-count="48" data-suffix="h"><span>—</span></div>
+          <p class="fig__l">The old gap, on the worst projects, between a discovery and its loss.</p>
+        </div>
+        <div class="fig">
+          <div class="fig__n"><span>1</span></div>
+          <p class="fig__l">The number of experts a reading still requires. Authorship was never delegated.</p>
+        </div>
+        <div class="fig">
+          <div class="fig__n" data-count="100" data-suffix="%"><span>—</span></div>
+          <p class="fig__l">Of readings that wait for a human signature before they are called true.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SECTION 2 — THE LOST DECORATIONS ===================== -->
+<section class="section discovery" id="discovery" aria-labelledby="disc-h">
+  <div class="wrap grid12">
+    <div class="disc__intro">
+      <p class="kicker">II — The Thing Under the Paper</p>
+      <h2 id="disc-h" data-split>A ceiling found on a Tuesday, and gone again by Friday.</h2>
+    </div>
+    <div class="disc__date" data-fade>
+      CASE FILE 0007<br/>FORMER ASSEMBLY HALL<br/>RECORDED, THEN COVERED<br/>NO CONSERVATOR PRESENT
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="disc__quote" data-reveal>
+      <q>They photographed it on a phone, and then there was <b>no more time.</b></q>
+    </div>
+  </div>
+
+  <div class="wrap grid12" style="row-gap:clamp(2rem,4vw,3rem)">
+    <div class="plate" data-plate>
+      <figure>
+        <!-- Generative archival fresco fragment with reading annotations -->
+        <svg viewBox="0 0 760 520" role="img" aria-label="Archival study of a hand-painted plaster fragment with conservation annotations">
+          <defs>
+            <filter id="plaster"><feTurbulence type="fractalNoise" baseFrequency="0.012 0.02" numOctaves="3" seed="7" result="t"/>
+              <feColorMatrix in="t" type="matrix" values="0 0 0 0 0.08  0 0 0 0 0.07  0 0 0 0 0.05  0 0 0 0.5 0"/>
+              <feComposite operator="over" in2="SourceGraphic"/></filter>
+            <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="n"/>
+              <feDisplacementMap in="SourceGraphic" in2="n" scale="4"/></filter>
+            <clipPath id="torn"><path d="M40,46 C120,30 180,52 250,40 C330,26 400,58 470,44 C560,26 640,58 716,46
+              C726,120 710,200 720,280 C730,360 706,430 716,474 C640,486 560,470 480,480 C390,491 320,470 240,480
+              C160,490 96,470 44,478 C36,400 52,320 44,250 C36,170 52,110 40,46 Z"/></clipPath>
+            <pattern id="motif" width="190" height="150" patternUnits="userSpaceOnUse">
+              <g stroke-linecap="round" fill="none">
+                <!-- palmette / acanthus rhythm -->
+                <path d="M95,18 C70,40 70,70 95,92 C120,70 120,40 95,18 Z" fill="#7a5230" opacity="0.55"/>
+                <path d="M95,28 C82,44 82,66 95,80 C108,66 108,44 95,28 Z" fill="#bd8a4f" opacity="0.5"/>
+                <path d="M40,108 C70,86 120,86 150,108" stroke="#3f5d72" stroke-width="3" opacity="0.5"/>
+                <circle cx="40" cy="108" r="5" fill="#3f5d72" opacity="0.5"/>
+                <circle cx="150" cy="108" r="5" fill="#3f5d72" opacity="0.5"/>
+                <path d="M95,100 L95,134" stroke="#7a5230" stroke-width="2" opacity="0.45"/>
+                <path d="M18,55 C30,72 30,96 18,112 M172,55 C160,72 160,96 172,112" stroke="#9a6b3a" stroke-width="2.4" opacity="0.4"/>
+              </g>
+            </pattern>
+          </defs>
+
+          <!-- plaster ground -->
+          <g clip-path="url(#torn)">
+            <rect x="0" y="0" width="760" height="520" fill="#cdbfa3"/>
+            <rect x="0" y="0" width="760" height="520" fill="#c2b394" filter="url(#plaster)"/>
+            <rect x="0" y="0" width="760" height="520" fill="url(#motif)" filter="url(#rough)"/>
+            <!-- losses (plaster-coloured gaps over the motif) -->
+            <path d="M250,150 q40,-30 78,4 q20,40 -18,66 q-60,18 -76,-30 q-8,-30 16,-40 Z" fill="#cabd9f" opacity="0.92"/>
+            <path d="M540,300 q50,-20 70,22 q6,46 -42,52 q-52,2 -52,-40 q2,-26 24,-34 Z" fill="#cabd9f" opacity="0.9"/>
+            <!-- cracks -->
+            <path d="M70,90 C180,150 240,140 330,220 C420,300 520,300 640,400" stroke="#5a4a32" stroke-width="1.1" fill="none" opacity="0.6"/>
+            <path d="M120,420 C200,360 230,330 300,330 C360,330 400,300 470,250" stroke="#5a4a32" stroke-width="0.9" fill="none" opacity="0.5"/>
+          </g>
+          <path d="M40,46 C120,30 180,52 250,40 C330,26 400,58 470,44 C560,26 640,58 716,46
+            C726,120 710,200 720,280 C730,360 706,430 716,474 C640,486 560,470 480,480 C390,491 320,470 240,480
+            C160,490 96,470 44,478 C36,400 52,320 44,250 C36,170 52,110 40,46 Z"
+            fill="none" stroke="rgba(236,230,215,0.18)" stroke-width="1"/>
+
+          <!-- ANNOTATIONS (animated draw-in) -->
+          <g class="anno-group">
+            <!-- ground -->
+            <line class="lead" x1="300" y1="40" x2="300" y2="-2" pathLength="1"/>
+            <circle class="dot" cx="300" cy="40" r="2.4"/>
+            <text class="anno" x="300" y="-8" text-anchor="middle"><tspan class="k">GROUND</tspan> — LIME PLASTER, 2 COATS</text>
+
+            <!-- azurite -->
+            <line class="lead" x1="40" y1="108" x2="-2" y2="108" pathLength="1"/>
+            <circle class="dot" cx="40" cy="108" r="2.4"/>
+            <text class="anno" x="-6" y="111" text-anchor="end"><tspan class="k">AZURITE</tspan> · NATURAL</text>
+
+            <!-- ochre / palmette -->
+            <line class="lead warm" x1="95" y1="55" x2="95" y2="-2" pathLength="1"/>
+            <circle class="dot warm" cx="95" cy="55" r="2.4"/>
+            <text class="anno" x="95" y="-8" text-anchor="middle"><tspan class="kw">OCHRE</tspan> · EARTH, PALMETTE FIELD</text>
+
+            <!-- loss -->
+            <line class="lead" x1="288" y1="186" x2="288" y2="522" pathLength="1"/>
+            <circle class="dot" cx="288" cy="186" r="2.4"/>
+            <text class="anno" x="288" y="535" text-anchor="middle"><tspan class="k">LOSS</tspan> — 12% OF DECORATED FIELD</text>
+
+            <!-- overpaint -->
+            <line class="lead" x1="640" y1="400" x2="762" y2="400" pathLength="1"/>
+            <circle class="dot" cx="640" cy="400" r="2.4"/>
+            <text class="anno" x="766" y="403" text-anchor="start"><tspan class="k">OVERPAINT</tspan> · 3 LAYERS</text>
+
+            <!-- date -->
+            <line class="lead warm" x1="575" y1="322" x2="575" y2="522" pathLength="1"/>
+            <circle class="dot warm" cx="575" cy="322" r="2.4"/>
+            <text class="anno" x="575" y="535" text-anchor="middle"><tspan class="kw">LAST PAINTED</tspan> · c. 1781 ± 15</text>
+          </g>
+        </svg>
+        <figcaption>
+          <span>PLATE 0007 — RECONSTRUCTED FROM A SINGLE PHONE PHOTOGRAPH</span>
+          <span>READING TIME: 41 SECONDS</span>
+        </figcaption>
+      </figure>
+    </div>
+
+    <div class="plate__note" data-reveal>
+      <p class="body-serif">It was an ordinary job. A drop ceiling came down for new services and, behind it,
+        a painted field nobody had recorded — palmettes in ochre, a border in azurite, the work of a hand
+        that had been dead for two centuries.</p>
+      <p class="body-serif">There was a conservator who could have read it. There was not a day in the
+        programme to bring one. So it was photographed, badly, and closed back up. The record that survives is
+        the one above: built, years later, from that single frame — annotated by the system, and confirmed by
+        the expert who finally had the time.</p>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="disc__close" data-reveal>
+      <p>The decoration was not destroyed. It was simply never understood. Obliq began as a refusal of that
+        sentence — the idea that a building could be lost not to fire or flood, but to the clock.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SECTION 3 — HOW OBLIQ WORKS ===================== -->
+<section class="section system" id="system" aria-labelledby="sys-h">
+  <div class="wrap grid12">
+    <div class="system__head">
+      <p class="kicker">III — The Reading Layer</p>
+      <h2 id="sys-h" data-split>A workflow for reading, not a machine for deciding.</h2>
+      <p class="lede">Obliq sits underneath the work like a survey level sits under a drawing. It proposes a
+        reading of what a surface is and how it is failing. The conservator keeps the pen.</p>
+    </div>
+    <div class="system__tag" data-reveal>
+      <span class="stamp">INFRASTRUCTURE · NOT ASSISTANT</span>
+      <p class="body-serif">Photographs in. A structured, contestable record out. Every interpretation is a
+        draft until a person signs it.</p>
+    </div>
+
+    <div class="pipe">
+      <p class="pipe__band">THE READING LAYER — SIX STAGES, ONE OF THEM HUMAN BY DESIGN</p>
+      <div class="steps" id="steps">
+        <div class="step"><div class="step__no"><b>01</b> / CAPTURE</div><h3>Photographs</h3><p>Ordinary site photos, taken on a phone. No rig, no lab, no special access.</p></div>
+        <div class="step"><div class="step__no"><b>02</b> / READ</div><h3>Interpretation</h3><p>The model proposes what it sees: layers, materials, past interventions, anomalies.</p></div>
+        <div class="step"><div class="step__no"><b>03</b> / NAME</div><h3>Material classification</h3><p>Pigments, plasters, stone, render and timber — named, bounded, and given confidence.</p></div>
+        <div class="step"><div class="step__no"><b>04</b> / MAP</div><h3>Degradation mapping</h3><p>Cracking, loss, damp, salts and growth — located on the surface and measured.</p></div>
+        <div class="step is-human"><div class="step__no"><b>05</b> / VALIDATE</div><span class="step__sig">✎ HUMAN</span><h3>Expert validation</h3><p>The conservator corrects, confirms or overrules. Authorship stays where it belongs.</p></div>
+        <div class="step"><div class="step__no"><b>06</b> / RECORD</div><h3>Documentation</h3><p>A living record others can build on — not a PDF that closes and is never opened again.</p></div>
+      </div>
+      <div class="pipe__line"><i id="pipeFill"></i></div>
+    </div>
+
+    <div class="system__authorship" data-reveal>
+      <q>“Nothing leaves stage five without a human signature. That was never a limitation. It was the point.”</q>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SECTION 4 — BEFORE / AFTER ===================== -->
+<section class="ba" id="workflow" aria-labelledby="ba-h">
+  <div class="wrap grid12 ba__intro">
+    <h2 id="ba-h" data-split>The same expertise, finally given a place to live.</h2>
+    <p data-fade>Scroll sideways. On the left, the work as it was. On the right, the work once the reading
+      became continuous.</p>
+  </div>
+
+  <div class="ba__pin" id="baPin">
+    <div class="ba__track" id="baTrack">
+      <div class="frame head">
+        <h3>Before<small>FRAGMENTED · MANUAL · REPEATED</small></h3>
+      </div>
+      <div class="frame is-before"><div class="frame__tag">BEFORE / 01</div><h4>Disconnected tools</h4><p>A camera, a notebook, a CAD seat, a spreadsheet, a folder of loose scans. Nothing spoke to anything else.</p><div class="ix">↘ data lost between formats</div></div>
+      <div class="frame is-before"><div class="frame__tag">BEFORE / 02</div><h4>Manual tracing</h4><p>Conditions drawn by hand over photographs, surface by surface, late into the evening before the report was due.</p><div class="ix">↘ hours per elevation</div></div>
+      <div class="frame is-before"><div class="frame__tag">BEFORE / 03</div><h4>Repeated work</h4><p>The next firm on the next phase started from nothing. The reading was redone because it had never been kept.</p><div class="ix">↘ knowledge discarded</div></div>
+      <div class="frame is-before"><div class="frame__tag">BEFORE / 04</div><h4>Slow documentation</h4><p>By the time the record was finished, the scaffold was down and the questions it raised could no longer be answered.</p><div class="ix">↘ understanding arrives too late</div></div>
+
+      <div class="frame head">
+        <h3>After<small>CONTINUOUS · SHARED · FASTER</small></h3>
+      </div>
+      <div class="frame is-after"><div class="frame__tag">AFTER / 01</div><h4>Continuous workflow</h4><p>Capture, reading, mapping and record live in one place. The wall is photographed once and understood from then on.</p><div class="ix">→ one surface, one thread</div></div>
+      <div class="frame is-after"><div class="frame__tag">AFTER / 02</div><h4>Shared intelligence</h4><p>Every confirmed reading teaches the record. The next expert begins where the last one signed off.</p><div class="ix">→ nothing is read twice</div></div>
+      <div class="frame is-after"><div class="frame__tag">AFTER / 03</div><h4>Faster assessment</h4><p>A first reading lands in minutes, not weeks — early enough to change the brief while change is still cheap.</p><div class="ix">→ decisions move upstream</div></div>
+      <div class="frame is-after"><div class="frame__tag">AFTER / 04</div><h4>Higher-quality decisions</h4><p>With the surface understood before the scaffold, conservation is chosen on evidence, not on whatever the deadline allowed.</p><div class="ix">→ care, by design</div></div>
+    </div>
+  </div>
+  <p class="ba__hint" id="baHint">DRAG OR SCROLL TO TRAVERSE →</p>
+</section>
+
+<!-- ===================== SECTION 5 — INFRASTRUCTURE ===================== -->
+<section class="section infra" id="infra" aria-labelledby="infra-h">
+  <div class="wrap grid12">
+    <div class="infra__head">
+      <p class="kicker">V — The Ground It Sits On</p>
+      <h2 id="infra-h" data-split>Underneath the work, a common record.</h2>
+      <p class="body-serif">Obliq was not built for a single discipline. It became the shared substrate beneath
+        anyone whose work begins with reading what is already there — quiet, documentary, assumed.</p>
+    </div>
+    <div class="infra__note" data-fade>
+      A reading made once<br/>should serve everyone<br/>who touches the building<br/>after — for as long<br/>as the building stands.
+    </div>
+
+    <div class="register" data-stagger>
+      <div class="reg-row"><div class="reg-grid"><span class="rn">01</span><div><h3>Restoration</h3><p>The first reading of a surface, before a single decision about what to keep, consolidate or let go.</p></div><span class="ar">→</span></div></div>
+      <div class="reg-row"><div class="reg-grid"><span class="rn">02</span><div><h3>Conservation</h3><p>A condition record that ages with the building — revisited, not rewritten, at every campaign.</p></div><span class="ar">→</span></div></div>
+      <div class="reg-row"><div class="reg-grid"><span class="rn">03</span><div><h3>Adaptive reuse</h3><p>Knowing precisely what a building is made of, so new life can be added without erasing the old.</p></div><span class="ar">→</span></div></div>
+      <div class="reg-row"><div class="reg-grid"><span class="rn">04</span><div><h3>Architectural heritage</h3><p>The slow archive of a place, held in a form the next custodian can actually read.</p></div><span class="ar">→</span></div></div>
+      <div class="reg-row"><div class="reg-grid"><span class="rn">05</span><div><h3>Public estate &amp; risk</h3><p>Stewards of thousands of buildings, finally able to see condition before it becomes emergency.</p></div><span class="ar">→</span></div></div>
+      <div class="reg-row"><div class="reg-grid"><span class="rn">06</span><div><h3>Archives &amp; research</h3><p>Each reading a primary source — searchable, comparable, and never again locked inside one expert's memory.</p></div><span class="ar">→</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SECTION 6 — VISION ===================== -->
+<section class="section vision" id="vision" aria-labelledby="vis-h">
+  <div class="wrap">
+    <p class="kicker">VI — The Change of Habit</p>
+    <h2 id="vis-h" data-split>We stopped restoring buildings only when they were in danger.</h2>
+    <div class="vision__body" data-reveal>
+      <p>Better information leads, in the end, to better stewardship. When a building can be read early,
+        cheaply and continuously, care stops being a rescue and becomes a habit.</p>
+      <p>The future was never automation. <strong>The future was attention</strong> — kept up, kept human,
+        kept on.</p>
+      <q>“Automation was never the ambition. Attention was.”</q>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FINAL CTA ===================== -->
+<section class="section cta" id="access" aria-labelledby="cta-h">
+  <div class="wrap">
+    <h2 class="cta__line" id="cta-h" data-split>No building should be lost because understanding took too long.</h2>
+    <form class="cta__form" id="accessForm" novalidate>
+      <div class="field">
+        <label for="email">Request access — work email</label>
+        <input type="email" id="email" name="email" placeholder="name@studio.org" autocomplete="email" required />
+      </div>
+      <button class="btn" type="submit"><span>Request Access</span></button>
+    </form>
+    <p class="cta__msg" id="ctaMsg" role="status" aria-live="polite"></p>
+    <p class="cta__fine">Obliq is opening to conservation studios, heritage bodies and public estate teams.
+      We read your building. You keep authorship.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ===================== COLOPHON ===================== -->
+<footer class="colophon" aria-label="Colophon">
+  <div class="wrap grid12">
+    <div class="colo__brand">
+      <div class="w">OBLIQ</div>
+      <p>AN EDITION OF THE DISPATCH, WRITTEN FROM 2030.<br/>
+         SET IN FRAUNCES, ARCHIVO &amp; IBM PLEX MONO.<br/>
+         FILED UNDER — BUILT HERITAGE · CONSERVATION · INFRASTRUCTURE.</p>
+    </div>
+    <div class="colo__col">
+      <h4>The Edition</h4>
+      <a href="#problem">The Problem</a>
+      <a href="#discovery">The Discovery</a>
+      <a href="#system">The System</a>
+      <a href="#workflow">Before / After</a>
+    </div>
+    <div class="colo__col">
+      <h4>The Company</h4>
+      <a href="#infra">Infrastructure</a>
+      <a href="#vision">Vision</a>
+      <span>Conservation studios</span>
+      <span>Heritage &amp; public estate</span>
+    </div>
+    <div class="colo__col">
+      <h4>Get in touch</h4>
+      <a href="#access">Request Access</a>
+      <a href="mailto:read@obliq.studio">read@obliq.studio</a>
+      <span>The expert stays in the loop.</span>
+    </div>
+    <div class="colo__bottom">
+      <span>© MMXXX OBLIQ — THE FUTURE TENSE IS EDITORIAL.</span>
+      <span>INFRASTRUCTURE FOR THE READING OF BUILDINGS.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var MOBILE  = window.matchMedia("(max-width: 1024px)").matches;
+
+  /* ---------------- menu ---------------- */
+  var menu = document.getElementById("menu");
+  var menuBtn = document.getElementById("menuBtn");
+  var menuClose = document.getElementById("menuClose");
+  function setMenu(open){
+    menu.classList.toggle("open", open);
+    menu.setAttribute("aria-hidden", String(!open));
+    menuBtn.setAttribute("aria-expanded", String(open));
+    document.body.style.overflow = open ? "hidden" : "";
+  }
+  if(menuBtn){ menuBtn.addEventListener("click", function(){ setMenu(true); }); }
+  if(menuClose){ menuClose.addEventListener("click", function(){ setMenu(false); }); }
+  menu.querySelectorAll("a").forEach(function(a){ a.addEventListener("click", function(){ setMenu(false); }); });
+
+  /* ---------------- smooth anchor ---------------- */
+  document.querySelectorAll('a[href^="#"]').forEach(function(a){
+    a.addEventListener("click", function(e){
+      var id = a.getAttribute("href");
+      if(id.length < 2) return;
+      var el = document.querySelector(id);
+      if(!el) return;
+      e.preventDefault();
+      el.scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "start" });
+    });
+  });
+
+  /* ---------------- masthead readouts (hero) ---------------- */
+  var readouts = Array.prototype.slice.call(document.querySelectorAll(".readout"));
+  var ri = 0;
+  function cycleReadout(){
+    readouts.forEach(function(r){ r.style.opacity = "0"; });
+    var a = readouts[ri % readouts.length];
+    var b = readouts[(ri + 2) % readouts.length];
+    if(a) a.style.transition = "opacity 1.1s ease", a.style.opacity = "0.92";
+    if(b) b.style.transition = "opacity 1.1s ease", b.style.opacity = "0.55";
+    ri++;
+  }
+  if(!REDUCED){ setTimeout(cycleReadout, 1400); setInterval(cycleReadout, 2600); }
+
+  /* ---------------- HERO generative surface ---------------- */
+  (function surface(){
+    var cv = document.getElementById("surface");
+    if(!cv) return;
+    var ctx = cv.getContext("2d");
+    var off = document.createElement("canvas");
+    var octx = off.getContext("2d");
+    var W=0, H=0, raf=0, t=0, visible=true;
+    var DPR = Math.min(window.devicePixelRatio || 1, 1.6);
+
+    function rnd(a,b){ return a + Math.random()*(b-a); }
+
+    function build(){
+      // offscreen tonal surface — drawn once per resize
+      var ow = Math.min(W*1.18, 1900), oh = Math.min(H*1.18, 1300);
+      off.width = ow; off.height = oh;
+      // warm plaster base
+      var g = octx.createLinearGradient(0,0,ow,oh);
+      g.addColorStop(0,"#1a1813"); g.addColorStop(0.5,"#171510"); g.addColorStop(1,"#0f0e0b");
+      octx.fillStyle = g; octx.fillRect(0,0,ow,oh);
+      // tonal blooms (damp, patina, light)
+      var blooms = 26;
+      for(var i=0;i<blooms;i++){
+        var x=rnd(0,ow), y=rnd(0,oh), r=rnd(ow*0.08, ow*0.34);
+        var rg = octx.createRadialGradient(x,y,0,x,y,r);
+        var warm = Math.random()>0.5;
+        rg.addColorStop(0, warm? "rgba(60,48,32,0.20)":"rgba(40,46,54,0.16)");
+        rg.addColorStop(1, "rgba(0,0,0,0)");
+        octx.fillStyle = rg; octx.beginPath(); octx.arc(x,y,r,0,6.283); octx.fill();
+      }
+      // faint pigment ghosts (lost frescoes)
+      var ghosts = 5;
+      for(var p=0;p<ghosts;p++){
+        var gx=rnd(ow*0.15,ow*0.85), gy=rnd(oh*0.15,oh*0.85), gr=rnd(ow*0.05,ow*0.13);
+        var pg = octx.createRadialGradient(gx,gy,0,gx,gy,gr);
+        var az = Math.random()>0.5;
+        pg.addColorStop(0, az? "rgba(124,162,192,0.10)":"rgba(195,146,83,0.09)");
+        pg.addColorStop(1,"rgba(0,0,0,0)");
+        octx.fillStyle = pg; octx.beginPath(); octx.arc(gx,gy,gr,0,6.283); octx.fill();
+      }
+      // cracks
+      octx.lineCap="round";
+      for(var c=0;c<7;c++){
+        octx.strokeStyle = "rgba(0,0,0,"+rnd(0.18,0.32)+")";
+        octx.lineWidth = rnd(0.6,1.6);
+        var cx=rnd(0,ow), cy=rnd(0,oh*0.3), len=rnd(8,16);
+        octx.beginPath(); octx.moveTo(cx,cy);
+        for(var s=0;s<len;s++){ cx+=rnd(-30,60); cy+=rnd(20,80); octx.lineTo(cx,cy); }
+        octx.stroke();
+        // hairline highlight beside crack
+        octx.strokeStyle="rgba(236,230,215,0.05)"; octx.lineWidth=0.6;
+        octx.stroke();
+      }
+    }
+
+    function resize(){
+      W = cv.clientWidth; H = cv.clientHeight;
+      cv.width = Math.floor(W*DPR); cv.height = Math.floor(H*DPR);
+      ctx.setTransform(DPR,0,0,DPR,0,0);
+      build();
+    }
+
+    function draw(){
+      t += 0.0016;
+      var dx = Math.sin(t)*22, dy = Math.cos(t*0.8)*16;
+      var sc = 1.12 + Math.sin(t*0.5)*0.02;
+      ctx.clearRect(0,0,W,H);
+      var scale = Math.max(W/off.width, H/off.height) * sc;
+      var iw = off.width*scale, ih = off.height*scale;
+      ctx.drawImage(off, (W-iw)/2 + dx, (H-ih)/2 + dy, iw, ih);
+      // reading scan — soft vertical light sweeping horizontally
+      var sx = ((Math.sin(t*0.6)*0.5+0.5))*W;
+      var lg = ctx.createLinearGradient(sx-120,0,sx+120,0);
+      lg.addColorStop(0,"rgba(124,162,192,0)");
+      lg.addColorStop(0.5,"rgba(124,162,192,0.06)");
+      lg.addColorStop(1,"rgba(124,162,192,0)");
+      ctx.fillStyle = lg; ctx.fillRect(sx-120,0,240,H);
+      if(visible && !REDUCED) raf = requestAnimationFrame(draw);
+    }
+
+    resize();
+    window.addEventListener("resize", function(){ resize(); });
+    if(REDUCED){ // static frame
+      var scale = Math.max(W/off.width, H/off.height)*1.12;
+      ctx.drawImage(off,(W-off.width*scale)/2,(H-off.height*scale)/2,off.width*scale,off.height*scale);
+    } else {
+      raf = requestAnimationFrame(draw);
+    }
+    // pause when offscreen
+    var hero = document.querySelector(".hero");
+    if("IntersectionObserver" in window && hero){
+      new IntersectionObserver(function(en){
+        visible = en[0].isIntersecting;
+        if(visible && !REDUCED && !raf){ raf = requestAnimationFrame(draw); }
+        if(!visible){ cancelAnimationFrame(raf); raf=0; }
+      },{threshold:0.01}).observe(hero);
+    }
+  })();
+
+  /* ---------------- magnetic buttons ---------------- */
+  if(!MOBILE && !REDUCED){
+    document.querySelectorAll(".btn").forEach(function(b){
+      b.addEventListener("mousemove", function(e){
+        var r=b.getBoundingClientRect();
+        var mx=e.clientX-r.left-r.width/2, my=e.clientY-r.top-r.height/2;
+        b.style.transform="translate("+mx*0.18+"px,"+my*0.28+"px)";
+      });
+      b.addEventListener("mouseleave", function(){ b.style.transform="translate(0,0)"; });
+    });
+  }
+
+  /* ---------------- form ---------------- */
+  var form = document.getElementById("accessForm");
+  var msg = document.getElementById("ctaMsg");
+  if(form){
+    form.addEventListener("submit", function(e){
+      e.preventDefault();
+      var email = document.getElementById("email").value.trim();
+      var ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      if(!ok){ msg.style.color="var(--sienna)"; msg.textContent="Enter a valid work email to request access."; return; }
+      msg.style.color="var(--azurite)";
+      msg.textContent="Request received — filed to the record. We'll be in touch from read@obliq.studio.";
+      form.reset();
+    });
+  }
+
+  /* ---------------- progress + folio ---------------- */
+  var prog = document.getElementById("progress");
+  var folioNum = document.getElementById("folioNum");
+  var sections = Array.prototype.slice.call(document.querySelectorAll("main > section, main > .narrative"));
+  function onScroll(){
+    var st = window.scrollY || document.documentElement.scrollTop;
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    if(prog) prog.style.width = (h>0 ? (st/h*100) : 0) + "%";
+    if(folioNum){
+      var idx = 0, mid = st + window.innerHeight*0.4;
+      sections.forEach(function(s,i){ if(s.offsetTop <= mid) idx = i; });
+      folioNum.textContent = ("0"+(idx)).slice(-2);
+    }
+  }
+  window.addEventListener("scroll", onScroll, {passive:true});
+  onScroll();
+
+  /* ---------------- active nav ---------------- */
+  var navLinks = Array.prototype.slice.call(document.querySelectorAll(".nav a"));
+  if("IntersectionObserver" in window){
+    var spy = new IntersectionObserver(function(ents){
+      ents.forEach(function(en){
+        if(en.isIntersecting){
+          var id = "#"+en.target.id;
+          navLinks.forEach(function(l){
+            if(l.getAttribute("href")===id && id!=="#access") l.classList.add("is-active");
+            else if(id!=="#access") l.classList.remove("is-active");
+          });
+        }
+      });
+    },{rootMargin:"-45% 0px -50% 0px"});
+    ["problem","discovery","system","infra","vision"].forEach(function(id){
+      var el=document.getElementById(id); if(el) spy.observe(el);
+    });
+  }
+
+  /* ============================================================
+     GSAP enhancements (progressive — content is visible without it)
+     ============================================================ */
+  function initGSAP(){
+    if(typeof window.gsap === "undefined" || typeof window.ScrollTrigger === "undefined" || REDUCED){
+      return; // graceful: everything stays visible
+    }
+    var gsap = window.gsap;
+    gsap.registerPlugin(window.ScrollTrigger);
+
+    /* word-mask split */
+    function splitWords(el){
+      if(el.dataset.split === "done") return;
+      var text = el.textContent;
+      el.textContent = "";
+      var frag = document.createDocumentFragment();
+      text.split(/(\s+)/).forEach(function(tok){
+        if(/^\s+$/.test(tok)){ frag.appendChild(document.createTextNode(" ")); return; }
+        if(tok === "") return;
+        var m = document.createElement("span"); m.className="msk";
+        var inner = document.createElement("span"); inner.textContent = tok;
+        m.appendChild(inner); frag.appendChild(m);
+      });
+      el.appendChild(frag);
+      el.dataset.split = "done";
+      return el.querySelectorAll(".msk > span");
+    }
+
+    document.querySelectorAll("[data-split]").forEach(function(el){
+      var inners = splitWords(el);
+      gsap.set(inners, { yPercent: 115 });
+      gsap.to(inners, {
+        yPercent: 0, duration: 0.9, ease: "power3.out", stagger: 0.045,
+        scrollTrigger: { trigger: el, start: "top 85%" }
+      });
+    });
+
+    /* fade items */
+    gsap.utils.toArray("[data-fade]").forEach(function(el){
+      gsap.from(el, { opacity:0, y:18, duration:1, ease:"power2.out",
+        scrollTrigger:{ trigger:el, start:"top 90%" } });
+    });
+
+    /* block reveals */
+    gsap.utils.toArray("[data-reveal]").forEach(function(el){
+      gsap.from(el, { opacity:0, y:34, duration:1.05, ease:"power3.out",
+        scrollTrigger:{ trigger:el, start:"top 88%" } });
+    });
+
+    /* staggered register rows */
+    document.querySelectorAll("[data-stagger]").forEach(function(group){
+      gsap.from(group.querySelectorAll(".reg-row"), {
+        opacity:0, y:26, duration:0.8, ease:"power2.out", stagger:0.1,
+        scrollTrigger:{ trigger:group, start:"top 80%" }
+      });
+    });
+
+    /* hero entrance */
+    gsap.from(".hero__eyebrow", { opacity:0, y:14, duration:1, delay:0.2, ease:"power2.out" });
+    gsap.from(".hero__sub, .hero__cue", { opacity:0, y:18, duration:1, delay:0.7, ease:"power2.out", stagger:0.12 });
+
+    /* hero dissolve on scroll */
+    gsap.to(".hero__inner", {
+      yPercent:-12, opacity:0, filter:"blur(7px)", ease:"none",
+      scrollTrigger:{ trigger:".hero", start:"top top", end:"bottom top", scrub:0.6 }
+    });
+    gsap.to(".hero__canvas", {
+      yPercent:14, ease:"none",
+      scrollTrigger:{ trigger:".hero", start:"top top", end:"bottom top", scrub:true }
+    });
+
+    /* count-ups */
+    document.querySelectorAll("[data-count]").forEach(function(el){
+      var end = parseFloat(el.dataset.count), suf = el.dataset.suffix || "";
+      var obj = { v:0 };
+      var span = el.querySelector("span") || el;
+      gsap.to(obj, {
+        v:end, duration:1.8, ease:"power2.out",
+        scrollTrigger:{ trigger:el, start:"top 88%" },
+        onUpdate:function(){ span.textContent = Math.round(obj.v) + suf; }
+      });
+    });
+
+    /* pipeline fill + annotation draw */
+    var pf = document.getElementById("pipeFill");
+    if(pf){
+      gsap.to(pf, { width:"100%", ease:"none",
+        scrollTrigger:{ trigger:"#steps", start:"top 75%", end:"bottom 60%", scrub:0.5 } });
+    }
+    gsap.from("#steps .step", { opacity:0, y:24, duration:0.7, ease:"power2.out", stagger:0.1,
+      scrollTrigger:{ trigger:"#steps", start:"top 80%" } });
+
+    /* fresco annotations */
+    var plate = document.querySelector("[data-plate]");
+    if(plate){
+      var leads = plate.querySelectorAll(".lead");
+      var dots = plate.querySelectorAll(".dot");
+      var texts = plate.querySelectorAll(".anno");
+      leads.forEach(function(l){ var len = l.getTotalLength ? l.getTotalLength() : 120;
+        l.style.strokeDasharray = len; l.style.strokeDashoffset = len; });
+      gsap.set([dots, texts], { opacity:0 });
+      var tl = gsap.timeline({ scrollTrigger:{ trigger:plate, start:"top 68%" } });
+      tl.from(plate.querySelector("figure"), { opacity:0, y:40, duration:1, ease:"power3.out" })
+        .to(leads, { strokeDashoffset:0, duration:0.7, ease:"power2.inOut", stagger:0.12 }, "-=0.3")
+        .to(dots, { opacity:1, duration:0.2, stagger:0.12 }, "<")
+        .to(texts, { opacity:1, duration:0.5, stagger:0.12 }, "-=0.5");
+    }
+
+    /* ---- Before/After horizontal pin ---- */
+    var track = document.getElementById("baTrack");
+    var pin = document.getElementById("baPin");
+    var hint = document.getElementById("baHint");
+    if(track && pin && !MOBILE){
+      var getScroll = function(){ return track.scrollWidth - window.innerWidth + (window.innerWidth*0.04); };
+      gsap.to(track, {
+        x: function(){ return -getScroll(); },
+        ease:"none",
+        scrollTrigger:{
+          trigger: pin,
+          start:"top top",
+          end: function(){ return "+=" + getScroll(); },
+          pin:true, scrub:0.7, invalidateOnRefresh:true,
+          onUpdate:function(self){ if(hint) hint.style.opacity = self.progress>0.02 ? "0" : "1"; }
+        }
+      });
+    } else if(track){
+      track.classList.add("stacked");
+    }
+
+    /* refresh after fonts settle */
+    if(document.fonts && document.fonts.ready){
+      document.fonts.ready.then(function(){ window.ScrollTrigger.refresh(); });
+    }
+    window.addEventListener("load", function(){ window.ScrollTrigger.refresh(); });
+  }
+
+  if(document.readyState === "complete"){ initGSAP(); }
+  else { window.addEventListener("load", initGSAP); }
+  // also try once scripts have parsed (defer)
+  document.addEventListener("DOMContentLoaded", function(){
+    if(typeof window.gsap !== "undefined") initGSAP();
+  });
+})();
+</script>
+</body>
+</html>
